@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="us">
+
+<head>
+    <meta charset="utf-8">
+    <script src="./js/jquery.min.js"></script>
+    <script src="https://wzrd.in/standalone/buffer"></script>
+    <script src="./js/web3.min.js"></script>
+    <script src="./js/bootbox.min.js"></script>
+	<script src="./js/ensutils-testnet.browser.metamask.js"></script>	
+</head>
+
+<body>
+
+	<h1>Testing ENS for Sprouts</h1>
+	<table border=1>
+		<tr><td>connected</td><td id="connected">...</td>   </tr>
+		<tr><td>createSubDomain</td><td><input type="text" name="subDomain" id="subDomain" value="subDomain"></td>   <td><button onclick="createSubDomain()">go</button></td></tr>
+	</table>
+
+    <script>
+		document.getElementById("connected").innerHTML = web3.isConnected();
+		console.log('init web3.eth.accounts: ' + web3.eth.accounts);		
+	
+		function createSubDomain() {
+			var subDomain = document.getElementById("subDomain").value;
+			//contract.set.sendTransaction(data, {from: web3.eth.accounts[0], gas:1000000});
+			console.log('subDomain: ' + subDomain);
+			newEnsName = subDomain + '.sproutsdao.test';
+			console.log('newEnsName: ' + newEnsName);
+
+			getAddrAsync(newEnsName, function (err, addr) {
+				if (!err) {
+					console.log('getAddr(newEnsName): ' + addr);			
+				} else {
+					console.error(err);
+				}			
+			});
+			// TODO: check that getAddr must return 0x0
+			
+			console.log('web3.eth.accounts: ' + web3.eth.accounts);
+			
+			ens.setSubnodeOwner(namehash('sproutsdao.test'), web3.sha3(subDomain), web3.eth.accounts[0], {from: web3.eth.accounts[0]}, function (err, txHash) {
+                if (!err) {
+					console.log('setSubnodeOwner txHash: ' + txHash);
+					ens.setResolver(namehash(newEnsName), publicResolver.address, {from: web3.eth.accounts[0]}, function (err, txHash) {
+						if (!err) {
+							console.log('setResolver txHash: ' + txHash);				
+							console.log('*********')
+							console.log('namehash(newEnsName) = ' + namehash(newEnsName));
+							console.log('web3.eth.accounts = ' + web3.eth.accounts);
+							publicResolver.setAddr(namehash(newEnsName), web3.eth.accounts[0], {from: web3.eth.accounts[0]}, function (err, txHash) {
+								if (!err) {
+									console.log('publicResolver txHash: ' + txHash);		
+									console.log('getAddr(newEnsName): ' + getAddrAsync(newEnsName, function (err, addr) {
+										if (!err) {
+											console.log('getAddr(newEnsName): ' + addr);			
+										} else {
+											console.error(err);
+										}			
+									});
+								}
+								else console.log(err);
+							});
+						}
+						else console.log(err);
+					});
+				}
+				else console.log(err);
+			});
+		}	
+		
+	</script>
+	
+	<!--
+        var accs = web3.eth.accounts;
+        // var voterX = '0x007A0f7cc9039E4797514401900774aAc946c476';
+        // var voterY = '0x0009bE4AcDb755e3225Eb51A2Ab8499bfa6b7217';
+        // var proposalA = '0x00D9f2c3769736a2950E9D31d418C998D6D55063';
+        // var proposalB = '0x006aA29639830814cBB949Cf85FAd1AdD86069C6';
+
+        var proposals = ['0x332413cc92cdd0a9c64a0ea782319a9fa23a9606', '0xd1b8d3780442ac186ef18ca6ab0a96f8967b431a', '0x8091147064d21caa2f1c652de00ac90dd526ad6b'];
+        // instantiate contract by address
+        var abiArray = [{ "constant": true, "inputs": [], "name": "maxFundedProposal", "outputs": [{ "name": "", "type": "address" }], "payable": false, "stateMutability": "view", "type": "function" }, { "constant": true, "inputs": [{ "name": "", "type": "address" }], "name": "balances", "outputs": [{ "name": "", "type": "uint256" }], "payable": false, "stateMutability": "view", "type": "function" }, { "constant": false, "inputs": [{ "name": "_proposal", "type": "address" }], "name": "vote", "outputs": [], "payable": false, "stateMutability": "nonpayable", "type": "function" }, { "constant": true, "inputs": [{ "name": "_owner", "type": "address" }], "name": "balanceOf", "outputs": [{ "name": "balance", "type": "uint256" }], "payable": false, "stateMutability": "view", "type": "function" }, { "constant": true, "inputs": [], "name": "totalBalance", "outputs": [{ "name": "", "type": "uint256" }], "payable": false, "stateMutability": "view", "type": "function" }, { "constant": true, "inputs": [], "name": "finalizeProposal", "outputs": [{ "name": "_proposal", "type": "address" }], "payable": false, "stateMutability": "view", "type": "function" }, { "inputs": [], "payable": false, "stateMutability": "nonpayable", "type": "constructor" }, { "payable": true, "stateMutability": "payable", "type": "fallback" }, { "anonymous": false, "inputs": [{ "indexed": false, "name": "message", "type": "string" }], "name": "Error", "type": "event" }]
+        var MyContract = web3.eth.contract(abiArray);
+        var contractAddress = "0x06Ef9a3d05F8F437D701a9869A0fB7078Fc8C207";
+        var contract = MyContract.at(contractAddress);
+        updateBalance();
+
+        function vote(proposalID) {
+
+            // currently hard code
+            var proposal = proposals[proposalID];
+            var value = prompt("How many weis would u like to give to the project?", 0);
+            if (value == null) return;
+            //TBD: from account 
+            
+			/*
+			console.log(contract);
+            web3.eth.sendTransaction({ to: contractAddress, value: value }, function (err, txHash) {
+                if (!err) {
+                    contract.vote(proposal, function (err, txHash) {
+                        if (!err) console.log(txHash);
+                        else console.log(err);
+                        updateBalance();
+                    });
+                }
+                else console.log(err);
+            });
+			*/
+			
+			var browser_ballot_sol_basictokenContract = web3.eth.contract([{"constant":false,"inputs":[{"name":"_spender","type":"address"},{"name":"_value","type":"uint256"}],"name":"approve","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"totalSupply","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"_from","type":"address"},{"name":"_to","type":"address"},{"name":"_value","type":"uint256"}],"name":"transferFrom","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[{"name":"_owner","type":"address"}],"name":"balanceOf","outputs":[{"name":"balance","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"_to","type":"address"},{"name":"_value","type":"uint256"}],"name":"transfer","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[{"name":"_owner","type":"address"},{"name":"_spender","type":"address"}],"name":"allowance","outputs":[{"name":"remaining","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"anonymous":false,"inputs":[{"indexed":true,"name":"owner","type":"address"},{"indexed":true,"name":"spender","type":"address"},{"indexed":false,"name":"value","type":"uint256"}],"name":"Approval","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"from","type":"address"},{"indexed":true,"name":"to","type":"address"},{"indexed":false,"name":"value","type":"uint256"}],"name":"Transfer","type":"event"}]);
+			console.log('web3_2');
+			console.log(web3);		
+			console.log(web3.eth.accounts[0]);
+			console.log(web3.eth.accounts[1]);
+			var browser_ballot_sol_basictoken = browser_ballot_sol_basictokenContract.new(
+			   {
+				 from: web3.eth.accounts[1], 
+				 data: '0x6060604052341561000f57600080fd5b6109998061001e6000396000f300606060405260043610610078576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff168063095ea7b31461007d57806318160ddd146100d757806323b872dd1461010057806370a0823114610179578063a9059cbb146101c6578063dd62ed3e14610220575b600080fd5b341561008857600080fd5b6100bd600480803573ffffffffffffffffffffffffffffffffffffffff1690602001909190803590602001909190505061028c565b604051808215151515815260200191505060405180910390f35b34156100e257600080fd5b6100ea610415565b6040518082815260200191505060405180910390f35b341561010b57600080fd5b61015f600480803573ffffffffffffffffffffffffffffffffffffffff1690602001909190803573ffffffffffffffffffffffffffffffffffffffff1690602001909190803590602001909190505061041b565b604051808215151515815260200191505060405180910390f35b341561018457600080fd5b6101b0600480803573ffffffffffffffffffffffffffffffffffffffff169060200190919050506106cb565b6040518082815260200191505060405180910390f35b34156101d157600080fd5b610206600480803573ffffffffffffffffffffffffffffffffffffffff16906020019091908035906020019091905050610714565b604051808215151515815260200191505060405180910390f35b341561022b57600080fd5b610276600480803573ffffffffffffffffffffffffffffffffffffffff1690602001909190803573ffffffffffffffffffffffffffffffffffffffff169060200190919050506108af565b6040518082815260200191505060405180910390f35b600080821415801561031b57506000600260003373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200190815260200160002060008573ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020016000205414155b1561032557600080fd5b81600260003373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200190815260200160002060008573ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff168152602001908152602001600020819055508273ffffffffffffffffffffffffffffffffffffffff163373ffffffffffffffffffffffffffffffffffffffff167f8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925846040518082815260200191505060405180910390a36001905092915050565b60015481565b600080600260008673ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200190815260200160002060003373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020016000205490506104ef83600360008873ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020016000205461093690919063ffffffff16565b600360008773ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020016000208190555061058483600360008773ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020016000205461094f90919063ffffffff16565b600360008673ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff168152602001908152602001600020819055506105da838261093690919063ffffffff16565b600260008773ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200190815260200160002060003373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff168152602001908152602001600020819055508373ffffffffffffffffffffffffffffffffffffffff168573ffffffffffffffffffffffffffffffffffffffff167fddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef856040518082815260200191505060405180910390a360019150509392505050565b6000600360008373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff168152602001908152602001600020549050919050565b600061076882600360003373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020016000205461093690919063ffffffff16565b600360003373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff168152602001908152602001600020819055506107fd82600360008673ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020016000205461094f90919063ffffffff16565b600360008573ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff168152602001908152602001600020819055508273ffffffffffffffffffffffffffffffffffffffff163373ffffffffffffffffffffffffffffffffffffffff167fddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef846040518082815260200191505060405180910390a36001905092915050565b6000600260008473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200190815260200160002060008373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200190815260200160002054905092915050565b600082821115151561094457fe5b818303905092915050565b600080828401905083811015151561096357fe5b80915050929150505600a165627a7a72305820cf8ffbe8369c984dd90400800e3e07962424e751d7a2cbfdfe99b767d4f550920029', 
+				 gas: '4700000'
+			   }, function (e, contract){
+				console.log(e, contract);
+				if (typeof contract.address !== 'undefined') {
+					 console.log('Contract mined! address: ' + contract.address + ' transactionHash: ' + contract.transactionHash);
+				}
+			 })				
+        }
+
+        function updateBalance() {
+            if (contract) {
+                console.log(contract);
+
+                var balance = contract.balances(accs[0], function (err, receipt) {
+                    if (!err) {
+                        console.log(receipt.toNumber());
+                        $('#balance').html('My Balance: ' + receipt.toNumber() + ' wei');
+                    } else console.log(err);
+                });
+            } else {
+                $('#balance').html('fetching...')
+            }
+
+        }
+    </script>
+	-->
+	
+</body>
+
+</html>

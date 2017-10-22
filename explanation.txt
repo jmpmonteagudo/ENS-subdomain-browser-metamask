@@ -1,0 +1,28 @@
+
+loadScript('ensutils-testnet.js');
+new Date(testRegistrar.expiryTimes(web3.sha3('sproutsdao')).toNumber() * 1000)
+testRegistrar.register(web3.sha3('sproutsdao'), eth.accounts[0], {from: eth.accounts[0]})
+ens.setResolver(namehash('sproutsdao.test'), publicResolver.address, {from: eth.accounts[0]});
+publicResolver.setAddr(namehash('sproutsdao.test'), eth.accounts[1], {from: eth.accounts[0]});
+getAddr('sproutsdao.test')
+
+subdomains:
+
+// 1- tell the domain name registrar (e.g. sproutsdao.test) to allocate a new subdomain (e.g. bar)
+ens.setSubnodeOwner(namehash('sproutsdao.test'), web3.sha3('bar'), eth.accounts[0], {from: eth.accounts[0]});
+
+// 2- define the logic (smart contract) in charge of translating (resolving) the new domain name (e.g. 'bar.sproutsdao.test') to some address
+ens.setResolver(namehash('bar.sproutsdao.test'), publicResolver.address, {from: eth.accounts[0]});
+
+// 3- set the address for that domain name. NOTE: the way this is set depends on the type of resolver. In this case, publicResolver is a template
+// smart contract given by the ENS library and it is very simple to set, just call setAddr method
+publicResolver.setAddr(namehash('bar.sproutsdao.test'), eth.accounts[2], {from: eth.accounts[0]});
+
+
+getAddr('bar.sproutsdao.test')
+
+
+root
+	registrar
+	resolvers
+	
