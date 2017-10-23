@@ -1,12 +1,12 @@
 
 if (typeof web3 !== 'undefined') {
 	web3 = new Web3(web3.currentProvider);
-	console.log(web3.currentProvider);
-	console.log('metamask web3.eth.accounts: ' + web3.eth.accounts);
+	///console.log(web3.currentProvider);
+	//console.log('metamask web3.eth.accounts: ' + web3.eth.accounts);
 } else {
 	// set the provider you want from Web3.providers
 	//web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
-	httpProviderAddress = "https://ropsten.infura.io/RSJlYSaMBn90senwYhnq";
+	httpProviderAddress = "https://ropsten.infura.io";
 	web3 = new Web3(new Web3.providers.HttpProvider(httpProviderAddress));		
 	
 }
@@ -1414,7 +1414,7 @@ function getAddrAsync(domainName, callback) {
   // first look up the resolver contract address
   ens.resolver(node, function(err, resolverAddress) {
 	if (!err) {
-		console.log(resolverAddress);
+		//console.log(resolverAddress);
 		if (resolverAddress === '0x0000000000000000000000000000000000000000') {
 			// resolver contract address was not found
 			callback(null, resolverAddress);
@@ -1423,7 +1423,7 @@ function getAddrAsync(domainName, callback) {
 		// look up the domainName's corresponding address
 		contract.addr(node, function(err, addr) {
 			if (!err) {
-				console.log(addr);
+				//console.log(addr);
 				callback(null, addr);
 			} else {
 				console.error(err);
