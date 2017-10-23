@@ -3,62 +3,101 @@
 
 <head>
     <meta charset="utf-8">
-    <script src="./js/jquery.min.js"></script>
-    <script src="https://wzrd.in/standalone/buffer"></script>
-    <script src="./js/web3.min.js"></script>
-    <script src="./js/bootbox.min.js"></script>
-	<script src="./js/ensutils-testnet.browser.metamask.js"></script>	
+    <script src="js/web3.min.js"></script>
+	<script src="js/ensutils-testnet.browser.metamask.js"></script>	
+    
+	<link href="css/simple_blue.css" type="text/css" rel="stylesheet" />
 </head>
+
+<title>Working with ENS with browser + Metamask</title>
 
 <body>
 
-	<h1>Testing ENS for Sprouts</h1>
-	<table border=1>
-		<tr><td>connected</td><td id="connected">...</td>   </tr>
-		<tr><td>createSubDomain</td><td><input type="text" name="subDomain" id="subDomain" value="subDomain"></td>   <td><button onclick="createSubDomain()">go</button></td></tr>
+	<h1>Working with ENS with browser + Metamask</h1>
+	<p>Registering and checking subdomains for <b><class id="domainName"></class></b>. Check console for logs.</p>
+
+	<table>
+		<tr><td>Connected to RPC server</td><td id="connected">...</td>   </tr>
+		<tr>
+			<td>Create subdomain and update address</td>
+			<td>
+				<input type="text" name="subDomain" id="subDomain" value="subDomain"><br />
+				<input type="text" name="subDomainAddress" id="subDomainAddress" value="0xd98e75cc85ae6f7e8bb1b382ebdab27d7e44bc30"><br />
+			</td>
+			<td><button onclick="createSubDomain()">Execute</button></td>
+		</tr>
+		<tr
+			><td>Check subdomain address</td>
+			<td>
+				<input type="text" name="subDomainToCheck" id="subDomainToCheck" value="subDomainToCheck"><br />
+				<class id="checkedSubDomainAddress"></class>
+			</td>
+			<td><button onclick="checkSubDomain()">Execute</button></td
+			></tr>
 	</table>
 
     <script>
-		document.getElementById("connected").innerHTML = web3.isConnected();
-		console.log('init web3.eth.accounts: ' + web3.eth.accounts);		
-	
-		function createSubDomain() {
-			var subDomain = document.getElementById("subDomain").value;
-			//contract.set.sendTransaction(data, {from: web3.eth.accounts[0], gas:1000000});
-			console.log('subDomain: ' + subDomain);
-			newEnsName = subDomain + '.sproutsdao.test';
-			console.log('newEnsName: ' + newEnsName);
 
-			getAddrAsync(newEnsName, function (err, addr) {
+		DOMAIN_NAME = "sproutsdao.test";
+		document.getElementById("domainName").innerHTML = DOMAIN_NAME;
+
+		document.getElementById("connected").innerHTML = web3.isConnected();
+		
+		//console.log('init web3.eth.accounts: ' + web3.eth.accounts);		
+
+		function getFullDomainName(subDomain) {
+			return subDomain + "." + DOMAIN_NAME;
+		}
+
+
+		function checkSubDomain() {
+			var subDomainToCheck = document.getElementById("subDomainToCheck").value;
+			var ensNameToCheck = getFullDomainName(subDomainToCheck);
+
+			console.log('Checking ENS domain name ' + ensNameToCheck);
+
+			getAddrAsync(ensNameToCheck, function (err, addr) {
 				if (!err) {
-					console.log('getAddr(newEnsName): ' + addr);			
+					document.getElementById("checkedSubDomainAddress").innerHTML = addr;
+					console.log('getAddr(subDomainToCheck): ' + addr);	
 				} else {
 					console.error(err);
 				}			
 			});
-			// TODO: check that getAddr must return 0x0
-			
-			console.log('web3.eth.accounts: ' + web3.eth.accounts);
-			
-			ens.setSubnodeOwner(namehash('sproutsdao.test'), web3.sha3(subDomain), web3.eth.accounts[0], {from: web3.eth.accounts[0]}, function (err, txHash) {
+		}
+
+		function createSubDomain() {
+			var subDomain = document.getElementById("subDomain").value;
+			var newEnsName = getFullDomainName(subDomain)
+			var subDomainAddress = document.getElementById("subDomainAddress").value;
+			console.log('subDomain: ' + subDomain);
+			console.log('newEnsName: ' + newEnsName);
+			console.log('subDomainAddress: ' + subDomainAddress);
+
+			ens.setSubnodeOwner(namehash(DOMAIN_NAME), web3.sha3(subDomain), web3.eth.accounts[0], {from: web3.eth.accounts[0]}, function (err, txHash) {
                 if (!err) {
 					console.log('setSubnodeOwner txHash: ' + txHash);
 					ens.setResolver(namehash(newEnsName), publicResolver.address, {from: web3.eth.accounts[0]}, function (err, txHash) {
 						if (!err) {
-							console.log('setResolver txHash: ' + txHash);				
-							console.log('*********')
-							console.log('namehash(newEnsName) = ' + namehash(newEnsName));
-							console.log('web3.eth.accounts = ' + web3.eth.accounts);
-							publicResolver.setAddr(namehash(newEnsName), web3.eth.accounts[0], {from: web3.eth.accounts[0]}, function (err, txHash) {
+							//console.log('setResolver txHash: ' + txHash);				
+							//console.log('*********')
+							//console.log('namehash(newEnsName) = ' + namehash(newEnsName));
+							//console.log('web3.eth.accounts = ' + web3.eth.accounts);
+							publicResolver.setAddr(namehash(newEnsName), subDomainAddress, {from: web3.eth.accounts[0]}, function (err, txHash) {
 								if (!err) {
-									console.log('publicResolver txHash: ' + txHash);		
+									//console.log('publicResolver txHash: ' + txHash);		
+									console.log('Subdomain ' + newEnsName + ' set to point to address ' + subDomainAddress + '. Changes will take effect after transactions are mined');	
+
+									/*
 									console.log('getAddr(newEnsName): ' + getAddrAsync(newEnsName, function (err, addr) {
 										if (!err) {
-											console.log('getAddr(newEnsName): ' + addr);			
+											//console.log('getAddr(newEnsName): ' + addr);			
+											
 										} else {
 											console.error(err);
 										}			
-									});
+									}));
+									*/
 								}
 								else console.log(err);
 							});
